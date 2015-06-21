@@ -1,0 +1,14 @@
+{
+  "name": "payment-protocol-terminal",
+  "description": "Simple Payment Protocol Implementation",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bitcore": "^0.12.9",
+    "bitcore-explorers": "^0.11.0",
+    "bitcore-payment-protocol": "^0.11.0",
+    "body-parser": "^1.13.1",
+    "qrcode-terminal": "^0.10.0"
+  }
+}
