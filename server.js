@@ -45,7 +45,7 @@ app.post("/invoice", function(req, res){
   details.set('time', now);
   details.set('expires', now + 60 * 60 * 24);
   details.set('memo', 'A payment request from the merchant.');
-  details.set('payment_url', 'https://3566d0d3.ngrok.com/ack');
+  details.set('payment_url', uri);
   details.set('merchant_data', new Buffer({size: 7}));
 
   var request = new PaymentProtocol().makePaymentRequest();
