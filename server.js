@@ -18,8 +18,9 @@ var Script = bitcore.Script;
 var privKey = new bitcore.PrivateKey();
 var address = privKey.toAddress();
 
-var uri = "http://example.com/";
-var qrUri = "bitcoin:?r=" + uri;
+var baseUri = "https://example.com/";
+var paymentURI = baseUri + "payment";
+var qrUri = "bitcoin:?r=" + baseUri;
 
 var rawbody;
 
@@ -33,15 +34,17 @@ app.post("/total", function(req, res){
 
   var amountBTC =  req.body['amount'];
 
-  var outputs = new PaymentProtocol.Output({
-    amount: amountBTC,
-    script: script.toBuffer()
-  });
+  var outputs = new PaymentProtocol().makeOutput();
+  outputs.set('amount', amountBTC);
+  outputs.set('script', script.toBuffer());
+
+  var merchant_outputs = [];
+  merchant_outputs.push(outputs.message);
 
   var details = new PaymentProtocol().makePaymentDetails();
 
   details.set('network', 'test');
-  details.set('outputs', outputs);
+  details.set('outputs', merchant_outputs);
   details.set('time', now);
   details.set('expires', now + 60 * 60 * 24);
   details.set('memo', 'A payment request from the merchant.');
@@ -56,10 +59,10 @@ app.post("/total", function(req, res){
 
   rawbody = request.serialize();
 
-  console.log("Your total is " + amountBTC + " BTC");
+  console.log("Your total is " + amountBTC + " Satoshis");
   qrcode.generate(qrUri);
 
-  res.send("Total of " + amountBTC);
+  res.send("Total of " + amountBTC + "Satoshis");
 
 });
 
@@ -70,6 +73,11 @@ app.get("/invoice", function(req, res){
   });
   res.send(rawbody);
 });
+
+//Todo recieve Payment from Post, broadcast the TX to the network and respond with an ACK
+app.post("/payment", function(req, res){
+  res.send("Payment Receiving Route");
+})
 
 app.listen(3000, function(){
   console.log("Server listening on port 3000");
