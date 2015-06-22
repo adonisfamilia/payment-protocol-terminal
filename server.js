@@ -15,6 +15,7 @@ bitcore.Networks.defaultNetwork = bitcore.Networks.testnet;
 var insight = new explorers.Insight();
 var Script = bitcore.Script;
 
+//Todo: Make HDKey and generate unique Address per transaction
 var privKey = new bitcore.PrivateKey();
 var address = privKey.toAddress();
 
@@ -28,6 +29,7 @@ app.get("/", function(req, res){
   res.send('Payment Protocol Terminal');
 });
 
+//Todo: move this functionality from route to cli
 app.post("/total", urlencodedParser, function(req, res){
   var now = Date.now() / 1000 | 0;
   var script = Script.buildPublicKeyHashOut(address);
@@ -74,10 +76,22 @@ app.get("/invoice", function(req, res){
   res.send(rawbody);
 });
 
-//Todo: Broadcast the TX to the network and respond with an ACK
+//Todo: Optional: Broadcast the TX to the network
 app.post("/payment", rawBodyParser, function(req, res){
-console.log(req.body);
-res.send('Incomplete Route');
+
+  var body = PaymentProtocol.Payment.decode(req.body);
+  var payment = new PaymentProtocol().makePayment(body);
+  console.log(payment.get('memo'));
+  var ack = new PaymentProtocol().makePaymentACK();
+  ack.set('payment', payment.message);
+  ack.set('memo', 'Thank you for your payment!');
+  var rawack = ack.serialize();
+  res.set({
+  'Content-Type': PaymentProtocol.PAYMENT_ACK_CONTENT_TYPE,
+  'Content-Length': rawack.length,
+  });
+  res.send(rawack);
+
 });
 
 app.listen(3000, function(){
