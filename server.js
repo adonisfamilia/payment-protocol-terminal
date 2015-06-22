@@ -7,8 +7,8 @@ var qrcode = require('qrcode-terminal');
 
 var app = express();
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+var urlencodedParser = bodyParser.urlencoded({ extended: false });
+var rawBodyParser = bodyParser.raw({type: PaymentProtocol.PAYMENT_CONTENT_TYPE});
 
 bitcore.Networks.defaultNetwork = bitcore.Networks.testnet;
 
@@ -19,8 +19,8 @@ var privKey = new bitcore.PrivateKey();
 var address = privKey.toAddress();
 
 var baseUri = "https://example.com/";
-var paymentURI = baseUri + "payment";
-var qrUri = "bitcoin:?r=" + baseUri;
+var paymentUri = baseUri + "payment";
+var qrUri = "bitcoin:?r=" + baseUri + "invoice";
 
 var rawbody;
 
@@ -28,14 +28,14 @@ app.get("/", function(req, res){
   res.send('Payment Protocol Terminal');
 });
 
-app.post("/total", function(req, res){
+app.post("/total", urlencodedParser, function(req, res){
   var now = Date.now() / 1000 | 0;
   var script = Script.buildPublicKeyHashOut(address);
 
-  var amountBTC =  req.body['amount'];
+  var amount =  req.body['amount'];
 
   var outputs = new PaymentProtocol().makeOutput();
-  outputs.set('amount', amountBTC);
+  outputs.set('amount', amount);
   outputs.set('script', script.toBuffer());
 
   var merchant_outputs = [];
@@ -48,7 +48,7 @@ app.post("/total", function(req, res){
   details.set('time', now);
   details.set('expires', now + 60 * 60 * 24);
   details.set('memo', 'A payment request from the merchant.');
-  details.set('payment_url', uri);
+  details.set('payment_url', paymentUri);
 
 
   var request = new PaymentProtocol().makePaymentRequest();
@@ -59,10 +59,10 @@ app.post("/total", function(req, res){
 
   rawbody = request.serialize();
 
-  console.log("Your total is " + amountBTC + " Satoshis");
+  console.log("Your total is " + amount + " Satoshis");
   qrcode.generate(qrUri);
 
-  res.send("Total of " + amountBTC + "Satoshis");
+  res.send("Total of " + amount + " Satoshis");
 
 });
 
@@ -74,10 +74,11 @@ app.get("/invoice", function(req, res){
   res.send(rawbody);
 });
 
-//Todo recieve Payment from Post, broadcast the TX to the network and respond with an ACK
-app.post("/payment", function(req, res){
-  res.send("Payment Receiving Route");
-})
+//Todo: Broadcast the TX to the network and respond with an ACK
+app.post("/payment", rawBodyParser, function(req, res){
+console.log(req.body);
+res.send('Incomplete Route');
+});
 
 app.listen(3000, function(){
   console.log("Server listening on port 3000");
