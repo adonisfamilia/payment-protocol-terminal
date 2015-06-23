@@ -79,8 +79,13 @@ app.get("/invoice", function(req, res){
 //Todo: Optional: Broadcast the TX to the network
 app.post("/payment", rawBodyParser, function(req, res){
 
+
+
   var body = PaymentProtocol.Payment.decode(req.body);
   var payment = new PaymentProtocol().makePayment(body);
+  var transaction = payment.get('transactions');
+  console.log(transaction);
+
   console.log(payment.get('memo'));
   var ack = new PaymentProtocol().makePaymentACK();
   ack.set('payment', payment.message);
